@@ -4,17 +4,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 
 	"sigmatech-kredit-plus/internal/user/dto"
 	"sigmatech-kredit-plus/internal/user/usecase"
+	"sigmatech-kredit-plus/pkg"
 	"sigmatech-kredit-plus/util"
 )
 
 type UserHandler struct {
-	usecase *usecase.UserUsecase
+	usecase usecase.UserUsecaseIF
 }
 
-func NewUserHandler(u *usecase.UserUsecase) *UserHandler {
+func NewUserHandler(u usecase.UserUsecaseIF) *UserHandler {
 	return &UserHandler{usecase: u}
 }
 
@@ -38,7 +40,15 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	body.PhotoKTP = photoKTP.(string)
 	body.PhotoSelfie = photoSelfie.(string)
 
-	err := h.usecase.CreateUser(c, &body)
+	err := pkg.Validate.Struct(&body)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			util.SendResponse(c, http.StatusBadRequest, nil, err.Error())
+			return
+		}
+	}
+
+	err = h.usecase.CreateUser(c, &body)
 	if err != nil {
 		e := util.ToHttpError(err)
 		util.SendResponse(c, e.Code, nil, e.Error())

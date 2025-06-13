@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+type UserUsecaseIF interface {
+	CreateUser(ctx context.Context, body *dto.CreateUser) error
+	GetUserByNIK(ctx context.Context, nik string) (*model.User, error)
+}
+
 type UserUsecase struct {
 	repo repository.UserRepositoryIF
 }
