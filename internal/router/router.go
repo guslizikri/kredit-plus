@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 
+	limitRoute "sigmatech-kredit-plus/internal/limit/route"
 	userRoute "sigmatech-kredit-plus/internal/user/route"
 )
 
@@ -31,6 +32,7 @@ func NewRouter(db *sqlx.DB) *gin.Engine {
 	router.Use(cors.New(corsConfig))
 
 	userRoute.RegisterUserRoutes(router, db)
+	limitRoute.RegisterLimitRoutes(router, db)
 
 	return router
 }

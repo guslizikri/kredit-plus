@@ -1,0 +1,84 @@
+package handler_test
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"sigmatech-kredit-plus/internal/limit/dto"
+	"sigmatech-kredit-plus/internal/limit/handler"
+	"sigmatech-kredit-plus/internal/limit/usecase"
+	"sigmatech-kredit-plus/pkg"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+)
+
+func TestCreateLimit(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	pkg.InitValidator()
+
+	testCases := map[string]struct {
+		requestBody    any
+		mockUsecaseErr error
+		expectedStatus int
+	}{
+		"successfully create limit": {
+			requestBody: dto.CreateLimit{
+				UserID:      "asdf",
+				TenorMonths: 1,
+				LimitAmount: 2,
+				UsedAmount:  1,
+			},
+			mockUsecaseErr: nil,
+			expectedStatus: http.StatusCreated,
+		},
+		"usecase returns error": {
+			requestBody: dto.CreateLimit{
+				UserID:      "asdf",
+				TenorMonths: 1,
+				LimitAmount: 2,
+				UsedAmount:  1,
+			},
+			mockUsecaseErr: errors.New("unknown error"),
+			expectedStatus: http.StatusInternalServerError,
+		},
+		"user required": {
+			requestBody: dto.CreateLimit{
+				TenorMonths: 1,
+				LimitAmount: 2,
+				UsedAmount:  1,
+			},
+			mockUsecaseErr: errors.New("unknown error"),
+			expectedStatus: http.StatusBadRequest,
+		},
+		"invalid body": {
+			requestBody:    "wrong-format",
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			mockUsecase := new(usecase.LimitUsecaseMock)
+
+			bodyBytes, _ := json.Marshal(tc.requestBody)
+			w := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(w)
+
+			req := httptest.NewRequest(http.MethodPost, "/limit", bytes.NewBuffer(bodyBytes))
+			req.Header.Set("Content-Type", "application/json")
+			ctx.Request = req
+
+			mockUsecase.On("CreateLimit", mock.Anything, mock.Anything).Return(tc.mockUsecaseErr).Once()
+
+			limitHandler := handler.NewLimitHandler(mockUsecase)
+			limitHandler.CreateLimit(ctx)
+
+			assert.Equal(t, tc.expectedStatus, w.Code)
+		})
+	}
+}
