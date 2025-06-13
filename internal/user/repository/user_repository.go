@@ -1,42 +1,49 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/jmoiron/sqlx"
 
-	"sigmatech-kredit-plus/internal/user/dto"
+	"sigmatech-kredit-plus/internal/model"
 )
 
-type PgUserRepository struct {
-	DB *sqlx.DB
+type UserRepository struct {
+	db *sqlx.DB
 }
-type UserRepository interface {
-	CreateUser(user *dto.User) error
-	GetUserByID(id string) (*dto.User, error)
-}
-
-func NewPgUserRepository(db *sqlx.DB) UserRepository {
-	return &PgUserRepository{DB: db}
+type UserRepositoryIF interface {
+	CreateUser(ctx context.Context, user *model.User) error
+	GetUserByNIK(ctx context.Context, nik string) (*model.User, error)
 }
 
-func (r *PgUserRepository) CreateUser(user *dto.User) error {
+func NewUserRepository(db *sqlx.DB) UserRepositoryIF {
+	return &UserRepository{db: db}
+}
+
+func (r *UserRepository) CreateUser(ctx context.Context, user *model.User) (err error) {
 	query := `
         INSERT INTO users (
-            id, nik, full_name, legal_name, place_of_birth, date_of_birth,
+            nik, full_name, legal_name, place_of_birth, date_of_birth,
             salary, photo_ktp, photo_selfie, created_at, updated_at
         ) VALUES (
-            gen_random_uuid(), :nik, :full_name, :legal_name, :place_of_birth, :date_of_birth,
-            :salary, :photo_ktp, :photo_selfie, NOW(), NOW()
-        ) RETURNING id
+            :nik, :full_name, :legal_name, :place_of_birth, :date_of_birth,
+            :salary, :photo_ktp, :photo_selfie, :created_at, :updated_at
+        )
     `
-	stmt, err := r.DB.PrepareNamed(query)
+
+	_, err = r.db.NamedExecContext(ctx, query, user)
 	if err != nil {
 		return err
 	}
-	return stmt.Get(&user.ID, user)
+
+	return nil
 }
 
-func (r *PgUserRepository) GetUserByID(id string) (*dto.User, error) {
-	var user dto.User
-	err := r.DB.Get(&user, "SELECT * FROM users WHERE id=$1", id)
-	return &user, err
+func (r *UserRepository) GetUserByNIK(ctx context.Context, nik string) (*model.User, error) {
+	var user model.User
+	err := r.db.GetContext(ctx, &user, "SELECT * FROM users WHERE nik = $1", nik)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

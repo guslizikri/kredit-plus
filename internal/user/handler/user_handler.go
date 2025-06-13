@@ -19,15 +19,29 @@ func NewUserHandler(u *usecase.UserUsecase) *UserHandler {
 }
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
-	var user dto.User
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var body dto.CreateUser
+	if err := c.ShouldBind(&body); err != nil {
+		util.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
-	err := h.usecase.CreateUser(&user)
+	photoKTP, ok := c.Get("photo_ktp")
+	if !ok {
+		util.SendResponse(c, http.StatusInternalServerError, nil, "photo ktp not found")
+		return
+	}
+	photoSelfie, ok := c.Get("photo_selfie")
+	if !ok {
+		util.SendResponse(c, http.StatusInternalServerError, nil, "photo selfie not found")
+		return
+	}
+	body.PhotoKTP = photoKTP.(string)
+	body.PhotoSelfie = photoSelfie.(string)
+
+	err := h.usecase.CreateUser(c, &body)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		e := util.ToHttpError(err)
+		util.SendResponse(c, e.Code, nil, e.Error())
 		return
 	}
 
@@ -36,7 +50,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 func (h *UserHandler) GetUserByID(c *gin.Context) {
 	id := c.Param("id")
-	user, err := h.usecase.GetUserByID(id)
+	user, err := h.usecase.GetUserByNIK(c, id)
 	if err != nil {
 		util.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
