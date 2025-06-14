@@ -2,7 +2,7 @@ package dto
 
 import "time"
 
-type CreateUser struct {
+type CreateConsumer struct {
 	NIK          string    `json:"nik" db:"nik" validate:"required"`
 	FullName     string    `json:"full_name" db:"full_name" validate:"required"`
 	LegalName    string    `json:"legal_name" db:"legal_name" validate:"required"`

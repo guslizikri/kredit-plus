@@ -6,22 +6,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 
-	"sigmatech-kredit-plus/internal/user/dto"
-	"sigmatech-kredit-plus/internal/user/usecase"
+	"sigmatech-kredit-plus/internal/consumer/dto"
+	"sigmatech-kredit-plus/internal/consumer/usecase"
 	"sigmatech-kredit-plus/pkg"
 	"sigmatech-kredit-plus/util"
 )
 
-type UserHandler struct {
-	usecase usecase.UserUsecaseIF
+type ConsumerHandler struct {
+	usecase usecase.ConsumerUsecaseIF
 }
 
-func NewUserHandler(u usecase.UserUsecaseIF) *UserHandler {
-	return &UserHandler{usecase: u}
+func NewConsumerHandler(u usecase.ConsumerUsecaseIF) *ConsumerHandler {
+	return &ConsumerHandler{usecase: u}
 }
 
-func (h *UserHandler) CreateUser(c *gin.Context) {
-	var body dto.CreateUser
+func (h *ConsumerHandler) CreateConsumer(c *gin.Context) {
+	var body dto.CreateConsumer
 	if err := c.ShouldBind(&body); err != nil {
 		util.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
@@ -48,22 +48,22 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		}
 	}
 
-	err = h.usecase.CreateUser(c, &body)
+	err = h.usecase.CreateConsumer(c, &body)
 	if err != nil {
 		e := util.ToHttpError(err)
 		util.SendResponse(c, e.Code, nil, e.Error())
 		return
 	}
 
-	util.SendResponse(c, http.StatusCreated, nil, "success create user")
+	util.SendResponse(c, http.StatusCreated, nil, "success create consumer")
 }
 
-func (h *UserHandler) GetUserByID(c *gin.Context) {
+func (h *ConsumerHandler) GetConsumerByID(c *gin.Context) {
 	id := c.Param("id")
-	user, err := h.usecase.GetUserByNIK(c, id)
+	consumer, err := h.usecase.GetConsumerByNIK(c, id)
 	if err != nil {
 		util.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return
 	}
-	util.SendResponse(c, http.StatusOK, user, "success get user detail")
+	util.SendResponse(c, http.StatusOK, consumer, "success get consumer detail")
 }
