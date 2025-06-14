@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-type User struct {
+type Consumer struct {
 	ID           string    `json:"id" db:"id"`
 	NIK          string    `json:"nik" db:"nik"`
 	FullName     string    `json:"full_name" db:"full_name"`
