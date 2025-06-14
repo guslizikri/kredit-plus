@@ -35,16 +35,16 @@ func (u *ConsumerUsecase) CreateConsumer(ctx context.Context, body *dto.CreateCo
 	}
 
 	consumer := model.Consumer{
-		NIK:          body.NIK,
-		FullName:     body.FullName,
-		LegalName:    body.LegalName,
-		PlaceOfBirth: body.PlaceOfBirth,
-		DateOfBirth:  body.DateOfBirth,
-		Salary:       body.Salary,
-		PhotoKTP:     body.PhotoKTP,
-		PhotoSelfie:  body.PhotoSelfie,
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		NIK:         body.NIK,
+		FullName:    body.FullName,
+		LegalName:   body.LegalName,
+		BirthPlace:  body.BirthPlace,
+		BirthDate:   body.BirthDate,
+		Salary:      body.Salary,
+		PhotoKTP:    body.PhotoKTP,
+		PhotoSelfie: body.PhotoSelfie,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	err = u.repo.CreateConsumer(ctx, &consumer)

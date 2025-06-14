@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 
+	authRoute "sigmatech-kredit-plus/internal/auth/route"
 	consumerRoute "sigmatech-kredit-plus/internal/consumer/route"
 )
 
@@ -30,6 +31,7 @@ func NewRouter(db *sqlx.DB) *gin.Engine {
 	// Apply the CORS middleware to the router
 	router.Use(cors.New(corsConfig))
 
+	authRoute.RegisterAuthRoutes(router, db)
 	consumerRoute.RegisterConsumerRoutes(router, db)
 
 	return router

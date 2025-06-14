@@ -23,10 +23,10 @@ func NewConsumerRepository(db *sqlx.DB) ConsumerRepositoryIF {
 func (r *ConsumerRepository) CreateConsumer(ctx context.Context, consumer *model.Consumer) (err error) {
 	query := `
         INSERT INTO consumers (
-            nik, full_name, legal_name, place_of_birth, date_of_birth,
+            nik, full_name, legal_name, birth_place, birth_date,
             salary, photo_ktp, photo_selfie, created_at, updated_at
         ) VALUES (
-            :nik, :full_name, :legal_name, :place_of_birth, :date_of_birth,
+            :nik, :full_name, :legal_name, :birth_place, :birth_date,
             :salary, :photo_ktp, :photo_selfie, :created_at, :updated_at
         )
     `
