@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestCreateLimit(t *testing.T) {
+func TestSetLimit(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	pkg.InitValidator()
 
@@ -27,32 +27,25 @@ func TestCreateLimit(t *testing.T) {
 		expectedStatus int
 	}{
 		"successfully create limit": {
-			requestBody: dto.CreateLimit{
-				ConsumerID:  "asdf",
-				TenorMonths: 1,
+			requestBody: dto.SetLimit{
+				TenorMonth:  1,
 				LimitAmount: 2,
-				UsedAmount:  1,
 			},
 			mockUsecaseErr: nil,
 			expectedStatus: http.StatusCreated,
 		},
 		"usecase returns error": {
-			requestBody: dto.CreateLimit{
-				ConsumerID:  "asdf",
-				TenorMonths: 1,
+			requestBody: dto.SetLimit{
+				TenorMonth:  1,
 				LimitAmount: 2,
-				UsedAmount:  1,
 			},
 			mockUsecaseErr: errors.New("unknown error"),
 			expectedStatus: http.StatusInternalServerError,
 		},
-		"consumer required": {
-			requestBody: dto.CreateLimit{
-				TenorMonths: 1,
+		"tenor required": {
+			requestBody: dto.SetLimit{
 				LimitAmount: 2,
-				UsedAmount:  1,
 			},
-			mockUsecaseErr: errors.New("unknown error"),
 			expectedStatus: http.StatusBadRequest,
 		},
 		"invalid body": {
@@ -69,14 +62,14 @@ func TestCreateLimit(t *testing.T) {
 			w := httptest.NewRecorder()
 			ctx, _ := gin.CreateTestContext(w)
 
-			req := httptest.NewRequest(http.MethodPost, "/limit", bytes.NewBuffer(bodyBytes))
+			req := httptest.NewRequest(http.MethodPost, "/limit/consumerid", bytes.NewBuffer(bodyBytes))
 			req.Header.Set("Content-Type", "application/json")
 			ctx.Request = req
 
-			mockUsecase.On("CreateLimit", mock.Anything, mock.Anything).Return(tc.mockUsecaseErr).Once()
+			mockUsecase.On("SetLimit", mock.Anything, mock.Anything).Return(tc.mockUsecaseErr).Once()
 
 			limitHandler := handler.NewLimitHandler(mockUsecase)
-			limitHandler.CreateLimit(ctx)
+			limitHandler.SetLimit(ctx)
 
 			assert.Equal(t, tc.expectedStatus, w.Code)
 		})

@@ -20,8 +20,9 @@ func NewLimitHandler(u usecase.LimitUsecaseIF) *LimitHandler {
 	return &LimitHandler{usecase: u}
 }
 
-func (h *LimitHandler) CreateLimit(c *gin.Context) {
-	var body dto.CreateLimit
+func (h *LimitHandler) SetLimit(c *gin.Context) {
+	var body dto.SetLimit
+	consumerId := c.Param("consumerId")
 	if err := c.ShouldBind(&body); err != nil {
 		util.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
@@ -35,12 +36,12 @@ func (h *LimitHandler) CreateLimit(c *gin.Context) {
 		}
 	}
 
-	err = h.usecase.CreateLimit(c, &body)
+	err = h.usecase.SetLimit(c, consumerId, &body)
 	if err != nil {
 		e := util.ToHttpError(err)
 		util.SendResponse(c, e.Code, nil, e.Error())
 		return
 	}
 
-	util.SendResponse(c, http.StatusCreated, nil, "success create limit")
+	util.SendResponse(c, http.StatusCreated, nil, "success set limit")
 }

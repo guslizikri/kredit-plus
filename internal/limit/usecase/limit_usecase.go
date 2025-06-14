@@ -9,7 +9,7 @@ import (
 )
 
 type LimitUsecaseIF interface {
-	CreateLimit(ctx context.Context, body *dto.CreateLimit) error
+	SetLimit(ctx context.Context, consumerId string, body *dto.SetLimit) error
 }
 
 type LimitUsecase struct {
@@ -20,22 +20,25 @@ func NewLimitUsecase(r repository.LimitRepositoryIF) *LimitUsecase {
 	return &LimitUsecase{repo: r}
 }
 
-func (u *LimitUsecase) CreateLimit(ctx context.Context, body *dto.CreateLimit) error {
+func (u *LimitUsecase) SetLimit(ctx context.Context, consumerId string, body *dto.SetLimit) error {
 	var err error
-
-	limit := model.Limit{
-		ConsumerID:  body.ConsumerID,
-		TenorMonths: body.TenorMonths,
-		LimitAmount: body.LimitAmount,
-		UsedAmount:  body.UsedAmount,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-
-	err = u.repo.CreateLimit(ctx, &limit)
+	exists, err := u.repo.Exists(ctx, consumerId, body.TenorMonth)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	limit := model.Limit{
+		ConsumerID:  consumerId,
+		TenorMonth:  body.TenorMonth,
+		LimitAmount: body.LimitAmount,
+		UsedAmount:  0,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	if exists {
+		return u.repo.UpdateLimit(ctx, limit.ConsumerID, limit.TenorMonth, limit.LimitAmount)
+	} else {
+		return u.repo.CreateLimit(ctx, &limit)
+	}
 }
