@@ -24,7 +24,7 @@ func (u *LimitUsecase) CreateLimit(ctx context.Context, body *dto.CreateLimit) e
 	var err error
 
 	limit := model.Limit{
-		UserID:      body.UserID,
+		ConsumerID:  body.ConsumerID,
 		TenorMonths: body.TenorMonths,
 		LimitAmount: body.LimitAmount,
 		UsedAmount:  body.UsedAmount,

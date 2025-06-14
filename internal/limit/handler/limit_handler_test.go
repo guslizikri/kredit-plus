@@ -28,7 +28,7 @@ func TestCreateLimit(t *testing.T) {
 	}{
 		"successfully create limit": {
 			requestBody: dto.CreateLimit{
-				UserID:      "asdf",
+				ConsumerID:  "asdf",
 				TenorMonths: 1,
 				LimitAmount: 2,
 				UsedAmount:  1,
@@ -38,7 +38,7 @@ func TestCreateLimit(t *testing.T) {
 		},
 		"usecase returns error": {
 			requestBody: dto.CreateLimit{
-				UserID:      "asdf",
+				ConsumerID:  "asdf",
 				TenorMonths: 1,
 				LimitAmount: 2,
 				UsedAmount:  1,
@@ -46,7 +46,7 @@ func TestCreateLimit(t *testing.T) {
 			mockUsecaseErr: errors.New("unknown error"),
 			expectedStatus: http.StatusInternalServerError,
 		},
-		"user required": {
+		"consumer required": {
 			requestBody: dto.CreateLimit{
 				TenorMonths: 1,
 				LimitAmount: 2,
