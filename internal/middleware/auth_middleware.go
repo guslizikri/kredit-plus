@@ -2,43 +2,41 @@ package middleware
 
 import (
 	"net/http"
-	"sigmatech-kredit-plus/pkg"
 	"strings"
+
+	"sigmatech-kredit-plus/pkg"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Auth(role ...string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var valid bool
-		var header string
-
-		header = ctx.GetHeader("Authorization")
+		header := ctx.GetHeader("Authorization")
 		if header == "" {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "authorization header missing"})
 			ctx.Abort()
 			return
 		}
 
-		if !strings.Contains(header, "Bearer") {
+		if !strings.HasPrefix(header, "Bearer ") {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid header type"})
 			ctx.Abort()
 			return
 		}
 
-		tokens := strings.TrimPrefix(header, "Bearer ")
-		tokens = strings.TrimSpace(tokens)
-
-		check, err := pkg.VerifyToken(tokens)
+		tokenStr := strings.TrimSpace(strings.TrimPrefix(header, "Bearer "))
+		check, err := pkg.VerifyToken(tokenStr)
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
 			ctx.Abort()
 			return
 		}
 
+		var valid bool
 		for _, r := range role {
 			if r == check.Role {
 				valid = true
+				break
 			}
 		}
 
@@ -52,5 +50,4 @@ func Auth(role ...string) gin.HandlerFunc {
 		ctx.Set("adminId", check.AdminId)
 		ctx.Next()
 	}
-
 }
