@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,12 +22,15 @@ func NewConsumerHandler(u usecase.ConsumerUsecaseIF) *ConsumerHandler {
 }
 
 func (h *ConsumerHandler) CreateConsumer(c *gin.Context) {
+	log.Println("0")
+
 	var body dto.CreateConsumer
 	if err := c.ShouldBind(&body); err != nil {
 		util.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
+	log.Println("1")
 	photoKTP, ok := c.Get("photo_ktp")
 	if !ok {
 		util.SendResponse(c, http.StatusInternalServerError, nil, "photo ktp not found")
@@ -39,6 +43,7 @@ func (h *ConsumerHandler) CreateConsumer(c *gin.Context) {
 	}
 	body.PhotoKTP = photoKTP.(string)
 	body.PhotoSelfie = photoSelfie.(string)
+	log.Println("2")
 
 	err := pkg.Validate.Struct(&body)
 	if err != nil {
