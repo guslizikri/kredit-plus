@@ -18,6 +18,7 @@ type LimitRepositoryIF interface {
 
 	GetLimitWithLock(ctx context.Context, tx *sqlx.Tx, consumerID string, tenor int) (*model.Limit, error)
 	UpdateUsedAmountWithTx(ctx context.Context, tx *sqlx.Tx, limitID string, usedAmount int) error
+	GetLimitByConsumerID(ctx context.Context, consumerId string) ([]*model.Limit, error)
 }
 
 func NewLimitRepository(db *sqlx.DB) LimitRepositoryIF {
@@ -81,4 +82,12 @@ func (r *LimitRepository) UpdateUsedAmountWithTx(ctx context.Context, tx *sqlx.T
 	`
 	_, err := tx.ExecContext(ctx, query, usedAmount, limitID)
 	return err
+}
+
+func (r *LimitRepository) GetLimitByConsumerID(ctx context.Context, consumerId string) ([]*model.Limit, error) {
+	var limits []*model.Limit
+	query := `SELECT id, consumer_id, tenor_month, limit_amount, used_amount, created_at, updated_at
+			  FROM limits WHERE consumer_id = $1`
+	err := r.db.SelectContext(ctx, &limits, query, consumerId)
+	return limits, err
 }

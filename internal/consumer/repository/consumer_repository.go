@@ -5,6 +5,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"sigmatech-kredit-plus/internal/consumer/dto"
 	"sigmatech-kredit-plus/internal/model"
 )
 
@@ -14,6 +15,7 @@ type ConsumerRepository struct {
 type ConsumerRepositoryIF interface {
 	CreateConsumer(ctx context.Context, consumer *model.Consumer) error
 	GetConsumerByNIK(ctx context.Context, nik string) (*model.Consumer, error)
+	GetConsumerByID(ctx context.Context, id string) (*dto.GetConsumerDetailResponse, error)
 }
 
 func NewConsumerRepository(db *sqlx.DB) ConsumerRepositoryIF {
@@ -46,4 +48,15 @@ func (r *ConsumerRepository) GetConsumerByNIK(ctx context.Context, nik string) (
 		return nil, err
 	}
 	return &consumer, nil
+}
+
+func (r *ConsumerRepository) GetConsumerByID(ctx context.Context, id string) (*dto.GetConsumerDetailResponse, error) {
+	var consumer dto.GetConsumerDetailResponse
+	query := `
+		SELECT id, nik, full_name, legal_name, birth_place, birth_date, 
+		salary, photo_ktp, photo_selfie, created_at, updated_at 
+		FROM consumers WHERE id = $1
+	`
+	err := r.db.GetContext(ctx, &consumer, query, id)
+	return &consumer, err
 }
