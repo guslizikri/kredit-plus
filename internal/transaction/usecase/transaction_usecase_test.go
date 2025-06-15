@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"sigmatech-kredit-plus/internal/common"
-	limit_repository "sigmatech-kredit-plus/internal/limit/repository"
+	limit_mocks "sigmatech-kredit-plus/internal/limit/mocks"
 	"sigmatech-kredit-plus/internal/model"
 	"sigmatech-kredit-plus/internal/transaction/dto"
-	"sigmatech-kredit-plus/internal/transaction/repository"
+	"sigmatech-kredit-plus/internal/transaction/mocks"
 	"sigmatech-kredit-plus/internal/transaction/usecase"
 	"testing"
 
@@ -103,8 +103,8 @@ func TestCreateTransaction_WithTransactionManagerMock(t *testing.T) {
 	for name, test := range testCases {
 		t.Run(name, func(t *testing.T) {
 			trxManager := new(common.TransactionManagerMock)
-			limitRepo := new(limit_repository.RepoMock)
-			trxRepo := new(repository.RepoMock)
+			limitRepo := new(limit_mocks.RepoMock)
+			trxRepo := new(mocks.RepoMock)
 			txMock := &sqlx.Tx{}
 
 			if test.mockBeginErr != nil {

@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"sigmatech-kredit-plus/internal/consumer/dto"
 	"sigmatech-kredit-plus/internal/consumer/handler"
-	"sigmatech-kredit-plus/internal/consumer/usecase"
+	"sigmatech-kredit-plus/internal/consumer/mocks"
 	"sigmatech-kredit-plus/pkg"
 	"testing"
 	"time"
@@ -104,7 +104,7 @@ func TestCreateConsumer(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			mockUsecase := new(usecase.ConsumerUsecaseMock)
+			mockUsecase := new(mocks.ConsumerUsecaseMock)
 
 			bodyBytes, _ := json.Marshal(tc.requestBody)
 			w := httptest.NewRecorder()

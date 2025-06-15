@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"sigmatech-kredit-plus/internal/limit/dto"
-	"sigmatech-kredit-plus/internal/limit/repository"
+	"sigmatech-kredit-plus/internal/limit/mocks"
 	"sigmatech-kredit-plus/internal/limit/usecase"
 	"testing"
 
@@ -54,7 +54,7 @@ func TestSetLimit(t *testing.T) {
 
 	for name, test := range testCases {
 		t.Run(name, func(t *testing.T) {
-			repoLimitMock := new(repository.RepoMock)
+			repoLimitMock := new(mocks.RepoMock)
 
 			repoLimitMock.On("Exists", mock.Anything, mock.Anything, mock.Anything).
 				Return(test.mockExistLimitRes, test.mockExistLimitErr).Once()

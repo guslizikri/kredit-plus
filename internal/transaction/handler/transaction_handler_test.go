@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"sigmatech-kredit-plus/internal/transaction/dto"
 	"sigmatech-kredit-plus/internal/transaction/handler"
-	"sigmatech-kredit-plus/internal/transaction/usecase"
+	"sigmatech-kredit-plus/internal/transaction/mocks"
 	"sigmatech-kredit-plus/pkg"
 	"testing"
 
@@ -74,7 +74,7 @@ func TestCreateTransaction(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			mockUsecase := new(usecase.TransactionUsecaseMock)
+			mockUsecase := new(mocks.TransactionUsecaseMock)
 
 			bodyBytes, _ := json.Marshal(tc.requestBody)
 			w := httptest.NewRecorder()
@@ -83,6 +83,7 @@ func TestCreateTransaction(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/transaction/consumerid", bytes.NewBuffer(bodyBytes))
 			req.Header.Set("Content-Type", "application/json")
 			ctx.Request = req
+			ctx.Set("consumerId", "consumer uuid")
 
 			mockUsecase.On("CreateTransaction", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.mockUsecaseRes, tc.mockUsecaseErr).Once()

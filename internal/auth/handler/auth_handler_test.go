@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"sigmatech-kredit-plus/internal/auth/dto"
 	"sigmatech-kredit-plus/internal/auth/handler"
-	"sigmatech-kredit-plus/internal/auth/usecase"
+	"sigmatech-kredit-plus/internal/auth/mocks"
 	"sigmatech-kredit-plus/pkg"
 	"testing"
 
@@ -61,7 +61,7 @@ func TestConsumerLogin(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			mockUsecase := new(usecase.AuthUsecaseMock)
+			mockUsecase := new(mocks.AuthUsecaseMock)
 
 			bodyBytes, _ := json.Marshal(tc.requestBody)
 			w := httptest.NewRecorder()
@@ -125,7 +125,7 @@ func TestAdminLogin(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			mockUsecase := new(usecase.AuthUsecaseMock)
+			mockUsecase := new(mocks.AuthUsecaseMock)
 
 			bodyBytes, _ := json.Marshal(tc.requestBody)
 			w := httptest.NewRecorder()

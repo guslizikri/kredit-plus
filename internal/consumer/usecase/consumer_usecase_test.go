@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"sigmatech-kredit-plus/internal/consumer/dto"
-	"sigmatech-kredit-plus/internal/consumer/repository"
+	"sigmatech-kredit-plus/internal/consumer/mocks"
 	"sigmatech-kredit-plus/internal/consumer/usecase"
 	"sigmatech-kredit-plus/internal/model"
 	"testing"
@@ -47,7 +47,7 @@ func TestCreateConsumer(t *testing.T) {
 
 	for name, test := range testCases {
 		t.Run(name, func(t *testing.T) {
-			repoConsumerMock := new(repository.RepoMock)
+			repoConsumerMock := new(mocks.RepoMock)
 
 			repoConsumerMock.On("GetConsumerByNIK", mock.Anything, mock.Anything).
 				Return(test.mockGetConsumerByNikReturnRes, test.mockGetConsumerByNikReturnErr).Once()

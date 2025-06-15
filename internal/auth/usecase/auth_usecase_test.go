@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"sigmatech-kredit-plus/internal/auth/dto"
-	"sigmatech-kredit-plus/internal/auth/repository"
+	"sigmatech-kredit-plus/internal/auth/mocks"
 	"sigmatech-kredit-plus/internal/auth/usecase"
 	"sigmatech-kredit-plus/internal/model"
 	"testing"
@@ -18,43 +18,83 @@ func TestConsumerLogin(t *testing.T) {
 	testCases := map[string]struct {
 		mockGetConsumerByNikReturnErr any
 		mockGetConsumerByNikReturnRes *model.Consumer
-		mockConsumerLoginErr          any
+		inputBody                     *dto.ConsumerLogin
 		expectedErr                   error
 	}{
 		"successfully login": {
 			mockGetConsumerByNikReturnErr: nil,
-			mockGetConsumerByNikReturnRes: &model.Consumer{},
-			mockConsumerLoginErr:          nil,
-			expectedErr:                   nil,
+			mockGetConsumerByNikReturnRes: &model.Consumer{
+				ID:       "consumer-uuid",
+				FullName: "John Doe",
+			},
+			inputBody: &dto.ConsumerLogin{
+				NIK:      "1234567890",
+				FullName: "John Doe",
+			},
+			expectedErr: nil,
 		},
 		"error: nik doesnt exist": {
 			mockGetConsumerByNikReturnErr: sql.ErrNoRows,
 			mockGetConsumerByNikReturnRes: nil,
-			expectedErr:                   errors.New("nik doesnt exist"),
+			inputBody: &dto.ConsumerLogin{
+				NIK:      "1234567890",
+				FullName: "John Doe",
+			},
+			expectedErr: errors.New("nik doesnt exist"),
 		},
 		"error: internal server error": {
 			mockGetConsumerByNikReturnErr: errors.New("unknown error"),
 			mockGetConsumerByNikReturnRes: nil,
-			expectedErr:                   errors.New("unknown error"),
+			inputBody: &dto.ConsumerLogin{
+				NIK:      "1234567890",
+				FullName: "John Doe",
+			},
+			expectedErr: errors.New("unknown error"),
+		},
+		"error: invalid name": {
+			mockGetConsumerByNikReturnErr: nil,
+			mockGetConsumerByNikReturnRes: &model.Consumer{
+				ID:       "consumer-uuid",
+				FullName: "Jane Doe",
+			},
+			inputBody: &dto.ConsumerLogin{
+				NIK:      "1234567890",
+				FullName: "John Doe",
+			},
+			expectedErr: errors.New("name invalid"),
 		},
 	}
 
 	for name, test := range testCases {
 		t.Run(name, func(t *testing.T) {
-			repoAuthMock := new(repository.RepoMock)
+			repoAuthMock := new(mocks.RepoMock)
 
-			repoAuthMock.On("GetConsumerByNIK", mock.Anything, mock.Anything).
+			repoAuthMock.On("GetConsumerByNIK", mock.Anything, test.inputBody.NIK).
 				Return(test.mockGetConsumerByNikReturnRes, test.mockGetConsumerByNikReturnErr).Once()
 
-			usecase := usecase.NewAuthUsecase(repoAuthMock)
+			u := usecase.NewAuthUsecase(repoAuthMock)
 
-			_, err := usecase.ConsumerLogin(context.Background(), &dto.ConsumerLogin{})
+			_, err := u.ConsumerLogin(context.Background(), test.inputBody)
 
 			if test.expectedErr != nil {
 				assert.EqualError(t, err, test.expectedErr.Error())
 			} else {
 				assert.NoError(t, err)
 			}
+
+			repoAuthMock.AssertExpectations(t)
 		})
 	}
+}
+
+func TestAdminLogin(t *testing.T) {
+	u := usecase.NewAuthUsecase(nil)
+	body := &dto.AdminLogin{
+		Username: "admin",
+		Password: "secret",
+	}
+
+	token, err := u.AdminLogin(context.Background(), body)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, token)
 }

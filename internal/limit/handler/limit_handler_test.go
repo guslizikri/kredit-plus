@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"sigmatech-kredit-plus/internal/limit/dto"
 	"sigmatech-kredit-plus/internal/limit/handler"
-	"sigmatech-kredit-plus/internal/limit/usecase"
+	"sigmatech-kredit-plus/internal/limit/mocks"
 	"sigmatech-kredit-plus/pkg"
 	"testing"
 
@@ -56,7 +56,7 @@ func TestSetLimit(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			mockUsecase := new(usecase.LimitUsecaseMock)
+			mockUsecase := new(mocks.LimitUsecaseMock)
 
 			bodyBytes, _ := json.Marshal(tc.requestBody)
 			w := httptest.NewRecorder()
