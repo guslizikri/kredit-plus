@@ -22,5 +22,6 @@ func RegisterTransactionRoutes(r *gin.Engine, db *sqlx.DB) {
 	transaction := r.Group("/transactions")
 	{
 		transaction.POST("/", middleware.Auth("consumer"), handler.CreateTransaction)
+		transaction.GET("/consumer-histories", middleware.Auth("consumer", "admin"), handler.GetTransactionHistory)
 	}
 }

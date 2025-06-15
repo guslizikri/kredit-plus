@@ -18,6 +18,7 @@ import (
 
 type TransactionUsecaseIF interface {
 	CreateTransaction(ctx context.Context, body *dto.CreateTransaction, consumerId string) (string, error)
+	GetTransactionHistory(ctx context.Context, params dto.GetTransactionHistoryQuery) ([]*dto.GetTransactionHistoryResponse, int, error)
 }
 
 type TransactionUsecase struct {
@@ -83,4 +84,20 @@ func (u *TransactionUsecase) CreateTransaction(ctx context.Context, body *dto.Cr
 	}
 
 	return transaction.ContractNumber, nil
+}
+
+func (u *TransactionUsecase) GetTransactionHistory(ctx context.Context, params dto.GetTransactionHistoryQuery) ([]*dto.GetTransactionHistoryResponse, int, error) {
+	offset := (params.Page - 1) * params.Limit
+
+	result, err := u.transactionRepo.FetchTransactionByConsumer(ctx, params.ConsumerId, params.Limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	total, err := u.transactionRepo.CountTransactionByConsumer(ctx, params.ConsumerId)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return result, total, nil
 }

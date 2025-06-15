@@ -11,6 +11,7 @@ import (
 	"sigmatech-kredit-plus/internal/transaction/mocks"
 	"sigmatech-kredit-plus/internal/transaction/usecase"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -145,6 +146,79 @@ func TestCreateTransaction_WithTransactionManagerMock(t *testing.T) {
 			}
 
 			_, err := usecase.CreateTransaction(context.Background(), body, "consumer-uuid")
+
+			if test.expectedErr != nil {
+				assert.EqualError(t, err, test.expectedErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+
+			trxManager.AssertExpectations(t)
+			limitRepo.AssertExpectations(t)
+			trxRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGetTransactionHistory(t *testing.T) {
+	testCases := map[string]struct {
+		mockFetchResult []*dto.GetTransactionHistoryResponse
+		mockFetchErr    error
+		mockCountResult int
+		mockCountErr    error
+		expectedErr     error
+	}{
+		"successfully": {
+			mockFetchResult: []*dto.GetTransactionHistoryResponse{
+				{
+					ContractNumber: "TRX-123",
+					TenorMonth:     12,
+					OTRPrice:       1000000,
+					Installment:    100000,
+					Interest:       50000,
+					AssetName:      "Motor",
+					CreatedAt:      time.Now(),
+				},
+			},
+			mockFetchErr:    nil,
+			mockCountResult: 1,
+			expectedErr:     nil,
+		},
+		"error: fetch transactions": {
+			mockFetchErr: errors.New("db error"),
+			expectedErr:  errors.New("db error"),
+		},
+		"error: count transactions": {
+			mockFetchResult: []*dto.GetTransactionHistoryResponse{},
+			mockCountErr:    errors.New("count error"),
+			expectedErr:     errors.New("count error"),
+		},
+	}
+
+	for name, test := range testCases {
+		t.Run(name, func(t *testing.T) {
+			trxManager := new(common.TransactionManagerMock)
+			limitRepo := new(limit_mocks.RepoMock)
+			trxRepo := new(mocks.RepoMock)
+			// txMock := &sqlx.Tx{}
+
+			trxRepo.On("FetchTransactionByConsumer", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(test.mockFetchResult, test.mockFetchErr).Once()
+
+			if test.mockFetchErr == nil {
+				trxRepo.On("CountTransactionByConsumer", mock.Anything, mock.Anything).
+					Return(test.mockCountResult, test.mockCountErr).Once()
+			}
+
+			u := usecase.NewTransactionUsecase(trxManager, limitRepo, trxRepo)
+
+			params := dto.GetTransactionHistoryQuery{
+				Page:       1,
+				Limit:      10,
+				ConsumerId: "consumer-uuid",
+			}
+
+			_, _, err := u.GetTransactionHistory(context.Background(), params)
 
 			if test.expectedErr != nil {
 				assert.EqualError(t, err, test.expectedErr.Error())

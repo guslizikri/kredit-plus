@@ -48,6 +48,7 @@ func Auth(role ...string) gin.HandlerFunc {
 
 		ctx.Set("consumerId", check.ConsumerId)
 		ctx.Set("adminId", check.AdminId)
+		ctx.Set("role", check.Role)
 		ctx.Next()
 	}
 }
