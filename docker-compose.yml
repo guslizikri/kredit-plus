@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16.2-alpine
+    container_name: db_kredit_plus
+    restart: always
+    environment:
+      POSTGRES_DB: kreditplus
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d kreditplus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - netgo
+
+  backend:
+    container_name: gokredit
+    image: zikrigusli/kreditplus:3
+    ports:
+      - "8081:8080" # Sesuai dengan port di Dockerfile
+    environment:
+      DB_HOST: db_kredit_plus
+      DB_NAME: kreditplus
+    links:
+      - postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - netgo
+
+networks:
+  netgo:
+    name: "netkredit"
+    external: false
