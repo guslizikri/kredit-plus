@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"sigmatech-kredit-plus/internal/consumer/dto"
 	"sigmatech-kredit-plus/internal/consumer/repository"
+	limit_repository "sigmatech-kredit-plus/internal/limit/repository"
 	"sigmatech-kredit-plus/internal/model"
 	"sigmatech-kredit-plus/util"
 	"time"
@@ -12,15 +13,19 @@ import (
 
 type ConsumerUsecaseIF interface {
 	CreateConsumer(ctx context.Context, body *dto.CreateConsumer) error
-	GetConsumerByNIK(ctx context.Context, nik string) (*model.Consumer, error)
+	GetConsumerDetail(ctx context.Context, id string) (*dto.GetConsumerDetailResponse, error)
 }
 
 type ConsumerUsecase struct {
-	repo repository.ConsumerRepositoryIF
+	repo      repository.ConsumerRepositoryIF
+	limitRepo limit_repository.LimitRepositoryIF
 }
 
-func NewConsumerUsecase(r repository.ConsumerRepositoryIF) *ConsumerUsecase {
-	return &ConsumerUsecase{repo: r}
+func NewConsumerUsecase(repo repository.ConsumerRepositoryIF, limitRepo limit_repository.LimitRepositoryIF) *ConsumerUsecase {
+	return &ConsumerUsecase{
+		repo:      repo,
+		limitRepo: limitRepo,
+	}
 }
 
 func (u *ConsumerUsecase) CreateConsumer(ctx context.Context, body *dto.CreateConsumer) error {
@@ -55,6 +60,28 @@ func (u *ConsumerUsecase) CreateConsumer(ctx context.Context, body *dto.CreateCo
 	return nil
 }
 
-func (u *ConsumerUsecase) GetConsumerByNIK(ctx context.Context, nik string) (*model.Consumer, error) {
-	return u.repo.GetConsumerByNIK(ctx, nik)
+func (u *ConsumerUsecase) GetConsumerDetail(ctx context.Context, id string) (*dto.GetConsumerDetailResponse, error) {
+	consumer, err := u.repo.GetConsumerByID(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, util.NotFound("consumer not found")
+		}
+		return nil, util.InternalServerError(err.Error())
+	}
+
+	limits, err := u.limitRepo.GetLimitByConsumerID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, l := range limits {
+		consumer.Limits = append(consumer.Limits, dto.LimitEmbedded{
+			TenorMonth:      l.TenorMonth,
+			LimitAmount:     l.LimitAmount,
+			UsedAmount:      l.UsedAmount,
+			AvailableAmount: l.LimitAmount - l.UsedAmount,
+		})
+	}
+
+	return consumer, nil
 }

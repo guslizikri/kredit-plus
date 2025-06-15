@@ -22,15 +22,12 @@ func NewConsumerHandler(u usecase.ConsumerUsecaseIF) *ConsumerHandler {
 }
 
 func (h *ConsumerHandler) CreateConsumer(c *gin.Context) {
-	log.Println("0")
-
 	var body dto.CreateConsumer
 	if err := c.ShouldBind(&body); err != nil {
 		util.SendResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
-	log.Println("1")
 	photoKTP, ok := c.Get("photo_ktp")
 	if !ok {
 		util.SendResponse(c, http.StatusInternalServerError, nil, "photo ktp not found")
@@ -65,7 +62,15 @@ func (h *ConsumerHandler) CreateConsumer(c *gin.Context) {
 
 func (h *ConsumerHandler) GetConsumerByID(c *gin.Context) {
 	id := c.Param("id")
-	consumer, err := h.usecase.GetConsumerByNIK(c, id)
+	consumerId, _ := c.Get("consumerId")
+	role, _ := c.Get("role")
+
+	if role == "consumer" && consumerId != id {
+		util.SendResponse(c, http.StatusForbidden, nil, "error: forbidden")
+		return
+	}
+
+	consumer, err := h.usecase.GetConsumerDetail(c, id)
 	if err != nil {
 		util.SendResponse(c, http.StatusInternalServerError, nil, err.Error())
 		return

@@ -10,6 +10,7 @@ import (
 	"sigmatech-kredit-plus/internal/consumer/handler"
 	"sigmatech-kredit-plus/internal/consumer/mocks"
 	"sigmatech-kredit-plus/pkg"
+	"strings"
 	"testing"
 	"time"
 
@@ -127,6 +128,88 @@ func TestCreateConsumer(t *testing.T) {
 			consumerHandler.CreateConsumer(ctx)
 
 			assert.Equal(t, tc.expectedStatus, w.Code)
+		})
+	}
+}
+
+func TestGetConsumerByID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	testCases := map[string]struct {
+		idParam            string
+		mockGetConsumerRes *dto.GetConsumerDetailResponse
+		mockGetConsumerErr error
+		role               string
+		consumerId         string
+		expectedStatusCode int
+		expectedBodyPart   string
+	}{
+		"successfully by admin": {
+			idParam: "consumer-uuid",
+			mockGetConsumerRes: &dto.GetConsumerDetailResponse{
+				ID:       "consumer-uuid",
+				NIK:      "1234567890",
+				FullName: "John Doe",
+			},
+			expectedStatusCode: http.StatusOK,
+			expectedBodyPart:   "success get consumer detail",
+			role:               "admin",
+		},
+		"successfully by consumer itself": {
+			idParam: "consumer-uuid",
+			mockGetConsumerRes: &dto.GetConsumerDetailResponse{
+				ID:       "consumer-uuid",
+				NIK:      "1234567890",
+				FullName: "John Doe",
+			},
+			expectedStatusCode: http.StatusOK,
+			expectedBodyPart:   "success get consumer detail",
+			role:               "consumer",
+			consumerId:         "consumer-uuid",
+		},
+		"error: forbidden for another consumer": {
+			idParam:            "consumer-uuid",
+			mockGetConsumerRes: nil,
+			mockGetConsumerErr: nil,
+			expectedStatusCode: http.StatusForbidden,
+			expectedBodyPart:   "forbidden",
+			role:               "consumer",
+			consumerId:         "another-uuid",
+		},
+		"error: internal server error": {
+			idParam:            "consumer-uuid",
+			mockGetConsumerErr: errors.New("db error"),
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedBodyPart:   "db error",
+			role:               "admin",
+		},
+	}
+
+	for name, test := range testCases {
+		t.Run(name, func(t *testing.T) {
+			r := gin.New()
+			mockUsecase := new(mocks.ConsumerUsecaseMock)
+			h := handler.NewConsumerHandler(mockUsecase)
+
+			r.GET("/consumers/:id", func(c *gin.Context) {
+				c.Set("role", test.role)
+				c.Set("consumerId", test.consumerId)
+				h.GetConsumerByID(c)
+			})
+
+			if test.mockGetConsumerErr != nil || test.mockGetConsumerRes != nil {
+				mockUsecase.On("GetConsumerDetail", mock.Anything, test.idParam).
+					Return(test.mockGetConsumerRes, test.mockGetConsumerErr).Once()
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/consumers/"+test.idParam, nil)
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+
+			assert.Equal(t, test.expectedStatusCode, w.Code)
+			assert.True(t, strings.Contains(w.Body.String(), test.expectedBodyPart))
+
+			mockUsecase.AssertExpectations(t)
 		})
 	}
 }

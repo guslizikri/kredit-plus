@@ -35,3 +35,7 @@ func (r *RepoMock) UpdateUsedAmountWithTx(ctx context.Context, tx *sqlx.Tx, limi
 	args := r.Mock.Called(ctx, tx, limitID, usedAmount)
 	return args.Error(0)
 }
+func (r *RepoMock) GetLimitByConsumerID(ctx context.Context, consumerId string) ([]*model.Limit, error) {
+	args := r.Mock.Called(ctx, consumerId)
+	return args.Get(0).([]*model.Limit), args.Error(1)
+}

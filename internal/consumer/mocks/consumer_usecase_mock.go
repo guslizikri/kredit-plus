@@ -3,7 +3,6 @@ package mocks
 import (
 	"context"
 	"sigmatech-kredit-plus/internal/consumer/dto"
-	"sigmatech-kredit-plus/internal/model"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -17,7 +16,7 @@ func (m *ConsumerUsecaseMock) CreateConsumer(ctx context.Context, body *dto.Crea
 	return args.Error(0)
 }
 
-func (m *ConsumerUsecaseMock) GetConsumerByNIK(ctx context.Context, nik string) (*model.Consumer, error) {
-	args := m.Called(ctx, nik)
-	return args.Get(0).(*model.Consumer), args.Error(1)
+func (m *ConsumerUsecaseMock) GetConsumerDetail(ctx context.Context, id string) (*dto.GetConsumerDetailResponse, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(*dto.GetConsumerDetailResponse), args.Error(1)
 }
