@@ -43,5 +43,5 @@ func (h *LimitHandler) SetLimit(c *gin.Context) {
 		return
 	}
 
-	util.SendResponse(c, http.StatusCreated, nil, "success set limit")
+	util.SendResponse(c, http.StatusOK, nil, "success set limit")
 }
