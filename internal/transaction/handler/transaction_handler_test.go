@@ -95,3 +95,93 @@ func TestCreateTransaction(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTransactionHistory(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	testCases := map[string]struct {
+		role               string
+		consumerID         string
+		query              string
+		mockResult         []*dto.GetTransactionHistoryResponse
+		mockTotal          int
+		mockErr            error
+		expectedStatusCode int
+		expectedMsg        string
+	}{
+		"success consumer": {
+			role:       "consumer",
+			consumerID: "consumer-uuid",
+			query:      "",
+			mockResult: []*dto.GetTransactionHistoryResponse{
+				{ContractNumber: "TRX-123"},
+			},
+			mockTotal:          1,
+			mockErr:            nil,
+			expectedStatusCode: http.StatusOK,
+			expectedMsg:        "success get transactions",
+		},
+		"success admin": {
+			role:  "admin",
+			query: "?page=1&limit=10&consumer_id=admin-consumer-id",
+			mockResult: []*dto.GetTransactionHistoryResponse{
+				{ContractNumber: "TRX-ADMIN"},
+			},
+			mockTotal:          1,
+			mockErr:            nil,
+			expectedStatusCode: http.StatusOK,
+			expectedMsg:        "success get transactions",
+		},
+		"error: invalid page param": {
+			role:               "consumer",
+			consumerID:         "consumer-uuid",
+			query:              "?page=abc&limit=10",
+			expectedStatusCode: http.StatusBadRequest,
+			expectedMsg:        "invalid page or limit value",
+		},
+		"error: consumer_id required for admin": {
+			role:               "admin",
+			query:              "",
+			expectedStatusCode: http.StatusBadRequest,
+			expectedMsg:        "consumer_id required for admin",
+		},
+		"error: usecase failure": {
+			role:               "consumer",
+			consumerID:         "consumer-uuid",
+			query:              "?page=1&limit=10",
+			mockErr:            errors.New("db error"),
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedMsg:        "db error",
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			mockUC := new(mocks.TransactionUsecaseMock)
+
+			if tc.expectedStatusCode == http.StatusOK || tc.mockErr != nil {
+				mockUC.On("GetTransactionHistory", mock.Anything, mock.Anything).
+					Return(tc.mockResult, tc.mockTotal, tc.mockErr).Once()
+			}
+
+			h := handler.NewTransactionHandler(mockUC)
+
+			r := gin.New()
+			r.GET("/transactions", func(c *gin.Context) {
+				c.Set("role", tc.role)
+				c.Set("consumerId", tc.consumerID)
+				h.GetTransactionHistory(c)
+			})
+
+			req := httptest.NewRequest(http.MethodGet, "/transactions"+tc.query, nil)
+			w := httptest.NewRecorder()
+
+			r.ServeHTTP(w, req)
+
+			assert.Equal(t, tc.expectedStatusCode, w.Code)
+			assert.Contains(t, w.Body.String(), tc.expectedMsg)
+
+			mockUC.AssertExpectations(t)
+		})
+	}
+}
