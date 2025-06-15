@@ -32,7 +32,7 @@ func TestSetLimit(t *testing.T) {
 				LimitAmount: 2,
 			},
 			mockUsecaseErr: nil,
-			expectedStatus: http.StatusCreated,
+			expectedStatus: http.StatusOK,
 		},
 		"usecase returns error": {
 			requestBody: dto.SetLimit{
@@ -66,7 +66,7 @@ func TestSetLimit(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			ctx.Request = req
 
-			mockUsecase.On("SetLimit", mock.Anything, mock.Anything).Return(tc.mockUsecaseErr).Once()
+			mockUsecase.On("SetLimit", mock.Anything, mock.Anything, mock.Anything).Return(tc.mockUsecaseErr).Once()
 
 			limitHandler := handler.NewLimitHandler(mockUsecase)
 			limitHandler.SetLimit(ctx)

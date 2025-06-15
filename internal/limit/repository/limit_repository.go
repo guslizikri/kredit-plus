@@ -15,6 +15,9 @@ type LimitRepositoryIF interface {
 	Exists(ctx context.Context, consumerID string, tenor int) (bool, error)
 	CreateLimit(ctx context.Context, limit *model.Limit) error
 	UpdateLimit(ctx context.Context, consumerID string, tenor int, limitAmount int) error
+
+	GetLimitWithLock(ctx context.Context, tx *sqlx.Tx, consumerID string, tenor int) (*model.Limit, error)
+	UpdateUsedAmountWithTx(ctx context.Context, tx *sqlx.Tx, limitID string, usedAmount int) error
 }
 
 func NewLimitRepository(db *sqlx.DB) LimitRepositoryIF {
@@ -55,5 +58,27 @@ func (r *LimitRepository) UpdateLimit(ctx context.Context, consumerID string, te
 		WHERE consumer_id = $1 AND tenor_month = $2
 	`
 	_, err := r.db.ExecContext(ctx, query, consumerID, tenor, limitAmount)
+	return err
+}
+
+func (r *LimitRepository) GetLimitWithLock(ctx context.Context, tx *sqlx.Tx, consumerID string, tenor int) (*model.Limit, error) {
+	var limit model.Limit
+	query := `
+		SELECT id, consumer_id, tenor_month, limit_amount, used_amount, created_at, updated_at
+		FROM limits
+		WHERE consumer_id = $1 AND tenor_month = $2
+		FOR UPDATE
+	`
+	err := tx.GetContext(ctx, &limit, query, consumerID, tenor)
+	return &limit, err
+}
+
+func (r *LimitRepository) UpdateUsedAmountWithTx(ctx context.Context, tx *sqlx.Tx, limitID string, usedAmount int) error {
+	query := `
+		UPDATE limits 
+		SET used_amount = used_amount + $1, updated_at = NOW()
+		WHERE id = $2
+	`
+	_, err := tx.ExecContext(ctx, query, usedAmount, limitID)
 	return err
 }

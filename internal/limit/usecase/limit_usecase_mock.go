@@ -12,6 +12,6 @@ type LimitUsecaseMock struct {
 }
 
 func (m *LimitUsecaseMock) SetLimit(ctx context.Context, consumerId string, body *dto.SetLimit) error {
-	args := m.Called(ctx, body)
+	args := m.Called(ctx, consumerId, body)
 	return args.Error(0)
 }

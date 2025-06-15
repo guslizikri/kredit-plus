@@ -10,6 +10,7 @@ import (
 	authRoute "sigmatech-kredit-plus/internal/auth/route"
 	consumerRoute "sigmatech-kredit-plus/internal/consumer/route"
 	limitRoute "sigmatech-kredit-plus/internal/limit/route"
+	transactionRoute "sigmatech-kredit-plus/internal/transaction/route"
 )
 
 func NewRouter(db *sqlx.DB) *gin.Engine {
@@ -35,6 +36,7 @@ func NewRouter(db *sqlx.DB) *gin.Engine {
 	authRoute.RegisterAuthRoutes(router, db)
 	consumerRoute.RegisterConsumerRoutes(router, db)
 	limitRoute.RegisterLimitRoutes(router, db)
+	transactionRoute.RegisterTransactionRoutes(router, db)
 
 	return router
 }
